@@ -23,7 +23,7 @@ platform :android do
   end
 
   desc "Deploy App to test environment - Testapp.io"
-  lan :deploy_testapp do
+  lane :deploy_testapp do
       increment_version_code
       gradle(task: "clean assembleRelease")
 
