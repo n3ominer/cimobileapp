@@ -18,7 +18,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-            ruby-version: '2.7.2'
+            ruby-version: '3.2.0'
 
       - uses: maierj/fastlane-action@v2.2.0
         env:
