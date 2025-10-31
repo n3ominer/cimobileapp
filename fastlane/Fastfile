@@ -1,0 +1,40 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:android)
+
+platform :android do
+  desc "Runs all the tests"
+  lane :test do
+    gradle(task: "test")
+  end
+
+  desc "Deploy App to test environment - Testapp.io"
+  lan :deploy_testapp do
+      increment_version_code
+      gradle(task: "clean assembleRelease")
+
+      upload_to_testappio(
+        api_token: ENV["API_TOKEN"],
+        app_id: ENV["APP_ID"],
+        apk: "app/build/outputs/apk/debug/app-debug.apk",
+        release_notes: "My release notes here...",
+        git_release_notes: true,
+        git_commit_id: false,
+        notify: true
+      )
+      end
+
+end
