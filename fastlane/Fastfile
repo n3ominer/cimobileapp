@@ -25,7 +25,7 @@ platform :android do
   desc "Deploy App to test environment - Testapp.io"
   lane :deploy_testapp do
       increment_version_code
-      gradle(task: "clean assembleRelease")
+      gradle(task: "clean build")
 
       upload_to_testappio(
         api_token: ENV["API_TOKEN"],
