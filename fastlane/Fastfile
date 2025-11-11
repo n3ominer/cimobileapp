@@ -1,53 +1,65 @@
-# This file contains the fastlane.tools configuration
-# You can find the documentation at https://docs.fastlane.tools
-#
-# For a list of all available actions, check out
-#
-#     https://docs.fastlane.tools/actions
-#
-# For a list of all available plugins, check out
-#
-#     https://docs.fastlane.tools/plugins/available-plugins
-#
-
-# Uncomment the line if you want fastlane to automatically update itself
-# update_fastlane
-
 default_platform(:android)
 
 platform :android do
 
   desc "Runs all the tests"
-      lane :test do
-        gradle(task: "test")
-      end
+  lane :test do
+    gradle(task: "test")
+  end
 
   desc "Deploy App to test environment - Testapp.io"
-     lane :deploy_testapp do
-          increment_version_code
-          gradle(task: "clean build")
-
-          # Construire le chemin complet
-          apk_path = File.expand_path("../app/build/outputs/apk/debug/app-debug.apk", __FILE__)
-
-          UI.message("Looking for APK at: #{apk_path}")
-
-          unless File.exist?(apk_path)
-            UI.error("APK not found at #{apk_path}")
-            UI.error("Files in directory:")
-            Dir.glob("#{File.dirname(apk_path)}/*").each { |f| UI.error("  - #{f}") }
-            UI.user_error!("APK file not found!")
-          end
-
-          upload_to_testappio(
-            api_token: ENV["TESTAPPIO_API_TOKEN"],
-            app_id: ENV["TESTAPPIO_APP_ID"],
-            apk_file: apk_path,
-            release_notes: "My release notes here...",
-            git_release_notes: true,
-            git_commit_id: false,
-            notify: true
-          )
-     end
+  lane :deploy_testapp do
+    UI.message("🚀 Starting deploy_testapp lane...")
+    
+    # Increment version code
+    UI.message("📈 Incrementing version code...")
+    increment_version_code
+    
+    # Clean and build
+    UI.message("🔨 Building APK...")
+    gradle(task: "clean build", project_dir: "android/", print_command: true)
+    
+    # Construire le chemin du fichier APK
+    apk_path = "app/build/outputs/apk/debug/app-debug.apk"
+    full_apk_path = File.expand_path(apk_path)
+    
+    UI.message("🔍 Looking for APK at: #{full_apk_path}")
+    
+    # Debug: afficher tous les fichiers APK trouvés
+    all_apks = Dir.glob("**/build/outputs/apk/**/*.apk")
+    if all_apks.any?
+      UI.message("✅ Found APK files:")
+      all_apks.each { |apk| UI.message("   - #{apk}") }
+    else
+      UI.error("❌ No APK files found anywhere in the project!")
+      UI.error("Checking build directory structure:")
+      Dir.glob("**/build/outputs/**/*").each { |f| UI.message("   #{f}") }
+      UI.user_error!("APK file not found!")
+    end
+    
+    # Vérifier si le fichier spécifique existe
+    unless File.exist?(apk_path)
+      UI.error("❌ APK not found at expected path: #{apk_path}")
+      UI.error("Using first available APK instead...")
+      apk_path = all_apks.first
+      UI.message("📦 Using APK: #{apk_path}")
+    end
+    
+    UI.success("✅ APK found: #{apk_path}")
+    
+    # Upload to TestApp.io
+    UI.message("📤 Uploading to TestApp.io...")
+    upload_to_testappio(
+      api_token: ENV["TESTAPPIO_API_TOKEN"],
+      app_id: ENV["TESTAPPIO_APP_ID"],
+      apk_file: apk_path,
+      release_notes: "Build from GitHub Actions",
+      git_release_notes: true,
+      git_commit_id: false,
+      notify: true
+    )
+    
+    UI.success("✅ Deploy completed successfully!")
+  end
 
 end
