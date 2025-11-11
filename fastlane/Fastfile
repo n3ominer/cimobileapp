@@ -18,24 +18,36 @@ default_platform(:android)
 platform :android do
 
   desc "Runs all the tests"
-  lane :test do
-    gradle(task: "test")
-  end
+      lane :test do
+        gradle(task: "test")
+      end
 
   desc "Deploy App to test environment - Testapp.io"
-  lane :deploy_testapp do
-      increment_version_code
-      gradle(task: "clean build")
+     lane :deploy_testapp do
+          increment_version_code
+          gradle(task: "clean build")
 
-      upload_to_testappio(
-        api_token: ENV["TESTAPPIO_API_TOKEN"],
-        app_id: ENV["TESTAPPIO_APP_ID"],
-        apk_file: "app/build/outputs/apk/debug/app-debug.apk",
-        release_notes: "My release notes here...",
-        git_release_notes: true,
-        git_commit_id: false,
-        notify: true
-      )
-      end
+          # Construire le chemin complet
+          apk_path = File.expand_path("../app/build/outputs/apk/debug/app-debug.apk", __FILE__)
+
+          UI.message("Looking for APK at: #{apk_path}")
+
+          unless File.exist?(apk_path)
+            UI.error("APK not found at #{apk_path}")
+            UI.error("Files in directory:")
+            Dir.glob("#{File.dirname(apk_path)}/*").each { |f| UI.error("  - #{f}") }
+            UI.user_error!("APK file not found!")
+          end
+
+          upload_to_testappio(
+            api_token: ENV["TESTAPPIO_API_TOKEN"],
+            app_id: ENV["TESTAPPIO_APP_ID"],
+            apk_file: apk_path,
+            release_notes: "My release notes here...",
+            git_release_notes: true,
+            git_commit_id: false,
+            notify: true
+          )
+     end
 
 end

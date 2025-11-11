@@ -20,6 +20,11 @@ jobs:
         with:
             ruby-version: '3.2.0'
 
+      - name: Debug - Check APK file
+        run: |
+          ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "APK directory not found"
+          find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
+
       - uses: maierj/fastlane-action@v2.2.0
         env:
           TESTAPPIO_API_TOKEN: ${{ secrets.TESTAPPIO_API_TOKEN }}
