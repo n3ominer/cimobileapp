@@ -22,8 +22,8 @@ jobs:
 
       - uses: maierj/fastlane-action@v2.2.0
         env:
-          TESTAPPIO_API_TOKEN: ${{ secrets.API_TOKEN }}
-          TESTAPPIO_APP_ID: ${{ secrets.APP_ID }}
+          TESTAPPIO_API_TOKEN: ${{ secrets.TESTAPPIO_API_TOKEN }}
+          TESTAPPIO_APP_ID: ${{ secrets.TESTAPPIO_APP_ID }}
         with:
           lane: 'android deploy_testapp'
           verbose: true
