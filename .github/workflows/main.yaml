@@ -3,67 +3,50 @@ name: Build & upload APK to TestApp.io
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: 
+      - main
+      - develop
 
 jobs:
-  android:
-    name: Build and upload to TestApp.io
+  unit-test: 
     runs-on: ubuntu-latest
-
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: "Set up JDK"
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          
+      - name: "Lancer les test"
+        run: ./gradlew testDebugUnitTest
+    
+  build:
+    name: Build and upload to TestApp.io
+    needs: unit-test
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2.0'
-          bundler-cache: true
-
-      - name: Add Fastlane to PATH
-        run: gem install fastlane
-
-      - name: Debug - List Android SDK
+      - name: Determiner le type de build
+        id: build-type
         run: |
-          echo "Java version:"
-          java -version
-          echo "Gradle version:"
-          gradle --version
-          echo "Android SDK path: $ANDROID_HOME"
-
-      - name: Build APK with Gradle
-        run: |
-          chmod +x ./gradlew
-          ./gradlew clean build --stacktrace
-
-      - name: Debug - Check if APK exists
-        run: |
-          echo "Looking for APK files..."
-          find . -name "*.apk" -type f
-          if [ -d "app/build/outputs/apk/debug" ]; then
-            echo "APK debug directory contents:"
-            ls -lah app/build/outputs/apk/debug/
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "BUILD_TYPE=Release" >> $GITHUB_OUTPUT
           else
-            echo "APK debug directory not found!"
+            echo "BUILD_TYPE=Debug" >> $GITHUB_OUTPUT
           fi
 
-      - name: Run Fastlane
-        uses: maierj/fastlane-action@v2.2.0
-        env:
-          TESTAPPIO_API_TOKEN: ${{ secrets.TESTAPPIO_API_TOKEN }}
-          TESTAPPIO_APP_ID: ${{ secrets.TESTAPPIO_APP_ID }}
-        with:
-          lane: 'android deploy_testapp'
-          verbose: true
+      # Ce step doit se lancer si le trigger se fait sur la branche develop
+      - name: Build debug
+        # conditionner ce step
+        if: steps.build-type.outputs.BUILD_TYPE == "Debug"
+        run: ./gradlew assembleDebug
+
+      # Ce step doit se lancer si le trigger se fait sur la branche main
+      - name: Build Release
+        # conditionner ce step
+        if: steps.build-type.outputs.BUILD_TYPE == "Release"
+        run: ./gradlew assembleRelease
