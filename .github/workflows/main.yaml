@@ -42,11 +42,11 @@ jobs:
       # Ce step doit se lancer si le trigger se fait sur la branche develop
       - name: Build debug
         # conditionner ce step
-        if: steps.build-type.outputs.BUILD_TYPE == "Debug"
+        if: steps.build-type.outputs.BUILD_TYPE == 'Debug'
         run: ./gradlew assembleDebug
 
       # Ce step doit se lancer si le trigger se fait sur la branche main
       - name: Build Release
         # conditionner ce step
-        if: steps.build-type.outputs.BUILD_TYPE == "Release"
+        if: steps.build-type.outputs.BUILD_TYPE == 'Release'
         run: ./gradlew assembleRelease
